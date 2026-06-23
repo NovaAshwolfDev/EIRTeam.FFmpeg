@@ -603,36 +603,30 @@ void YUVGPUConverter::convert() {
 }
 
 void YUVGPUConverter::_convert_internal() {
-	// First we must ensure everything we need exists
-	_ensure_pipeline();
-	_ensure_plane_textures();
-	_ensure_output_texture();
-	_upload_plane_images();
-
-	RD *rd = RS::get_singleton()->get_rendering_device();
-
-	push_constant.use_alpha = yuv_plane_images[3].is_valid() ? 1 : 0;
-
-	PackedByteArray push_constant_data;
-	push_constant_data.resize(sizeof(push_constant));
-	memcpy(push_constant_data.ptrw(), &push_constant, push_constant_data.size());
-
-	ComputeListID compute_list = rd->compute_list_begin();
-	rd->compute_list_bind_compute_pipeline(compute_list, pipeline);
-
+    // First we must ensure everything we need exists
+    _ensure_pipeline();
+    _ensure_plane_textures();
+    _ensure_output_texture();
+    _upload_plane_images();
+    RD *rd = RS::get_singleton()->get_rendering_device();
+    push_constant.use_alpha = yuv_plane_images[3].is_valid() ? 1 : 0;
+    PackedByteArray push_constant_data;
+    push_constant_data.resize(sizeof(push_constant));
+    memcpy(push_constant_data.ptrw(), &push_constant, push_constant_data.size());
+    ComputeListID compute_list = rd->compute_list_begin();
+    rd->compute_list_bind_compute_pipeline(compute_list, pipeline);
 #ifdef GDEXTENSION
-	rd->compute_list_set_push_constant(compute_list, push_constant_data, push_constant_data.size());
+    rd->compute_list_set_push_constant(compute_list, push_constant_data, 4);
 #else
-	rd->compute_list_set_push_constant(compute_list, push_constant_data.ptr(), push_constant_data.size());
+    rd->compute_list_set_push_constant(compute_list, push_constant_data.ptr(), 4);
 #endif
-	rd->compute_list_bind_uniform_set(compute_list, yuv_planes_uniform_sets[0], 0);
-	rd->compute_list_bind_uniform_set(compute_list, yuv_planes_uniform_sets[1], 1);
-	rd->compute_list_bind_uniform_set(compute_list, yuv_planes_uniform_sets[2], 2);
-	rd->compute_list_bind_uniform_set(compute_list, yuv_planes_uniform_sets[3], 3);
-	rd->compute_list_bind_uniform_set(compute_list, out_uniform_set, 4);
-
-	rd->compute_list_dispatch(compute_list, Math::ceil(frame_size.x / 8.0f), Math::ceil(frame_size.y / 8.0f), 1);
-	rd->compute_list_end();
+    rd->compute_list_bind_uniform_set(compute_list, yuv_planes_uniform_sets[0], 0);
+    rd->compute_list_bind_uniform_set(compute_list, yuv_planes_uniform_sets[1], 1);
+    rd->compute_list_bind_uniform_set(compute_list, yuv_planes_uniform_sets[2], 2);
+    rd->compute_list_bind_uniform_set(compute_list, yuv_planes_uniform_sets[3], 3);
+    rd->compute_list_bind_uniform_set(compute_list, out_uniform_set, 4);
+    rd->compute_list_dispatch(compute_list, Math::ceil(frame_size.x / 8.0f), Math::ceil(frame_size.y / 8.0f), 1);
+    rd->compute_list_end();
 }
 
 Ref<Texture2D> YUVGPUConverter::get_output_texture() const {
