@@ -8,6 +8,18 @@ on:
       artifact-name:
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Build target'
+        required: true
+        type: string
+        default: 'release'
+      artifact-name:
+        description: 'Name of the uploaded artifact'
+        required: true
+        type: string
+        default: 'windows-build'
 # Global Settings
 # SCONS_CACHE for windows must be set in the build environment
 env:
